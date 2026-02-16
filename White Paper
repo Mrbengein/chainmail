@@ -1,0 +1,21 @@
+Problème
+
+SMTP auth est centralisé et vulnérable.
+
+Solution
+
+Remplacer l’authentification par validation on-chain.
+
+Bénéfices
+
+Anti-spam natif
+
+Revocation immédiate
+
+Reputation programmable
+
+Contrôle total réseau privé
+
+Vision
+
+Créer un réseau fédéré de serveurs W3Mail interopérables.
