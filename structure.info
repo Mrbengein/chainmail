@@ -1,0 +1,8 @@
+w3mail/
+│
+├── docker-compose.yml
+├── contracts/
+├── registry-service/
+├── gateway/
+├── message-service/
+└── scripts/
