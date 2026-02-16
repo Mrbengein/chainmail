@@ -1,0 +1,62 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/access/AccessControl.sol";
+
+contract W3MailRegistry is AccessControl {
+
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    struct Identity {
+        bool canSend;
+        bool canReceive;
+        uint256 reputation;
+        uint256 createdAt;
+    }
+
+    mapping(bytes32 => Identity) private identities;
+
+    event Registered(bytes32 indexed id);
+    event Revoked(bytes32 indexed id);
+    event ReputationChanged(bytes32 indexed id, uint256 value);
+
+    constructor() {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(ADMIN_ROLE, msg.sender);
+    }
+
+    function register(
+        bytes32 id,
+        bool send,
+        bool receive
+    ) external onlyRole(ADMIN_ROLE) {
+        identities[id] = Identity(
+            send,
+            receive,
+            100,
+            block.timestamp
+        );
+        emit Registered(id);
+    }
+
+    function revoke(bytes32 id)
+        external onlyRole(ADMIN_ROLE)
+    {
+        delete identities[id];
+        emit Revoked(id);
+    }
+
+    function updateReputation(bytes32 id, uint256 value)
+        external onlyRole(ADMIN_ROLE)
+    {
+        identities[id].reputation = value;
+        emit ReputationChanged(id, value);
+    }
+
+    function getIdentity(bytes32 id)
+        external view
+        returns (Identity memory)
+    {
+        return identities[id];
+    }
+}
