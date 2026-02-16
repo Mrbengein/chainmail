@@ -1,36 +1,44 @@
-version: "3.9"
+import net from "net";
+import crypto from "crypto";
+import axios from "axios";
 
-services:
+const server = net.createServer(socket => {
 
-  besu:
-    image: hyperledger/besu:latest
-    command: >
-      --network=dev
-      --rpc-http-enabled
-      --rpc-http-api=ETH,NET,WEB3
-    ports:
-      - "8545:8545"
+    socket.write("220 W3SMTP Ready\r\n");
 
-  registry:
-    build: ./registry-service
-    environment:
-      RPC_URL: http://besu:8545
-    depends_on:
-      - besu
+    let email = null;
 
-  gateway:
-    build: ./gateway
-    ports:
-      - "2525:2525"
-    depends_on:
-      - registry
+    socket.on("data", async data => {
 
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_PASSWORD: w3mail
+        const msg = data.toString().trim();
 
-  message:
-    build: ./message-service
-    depends_on:
-      - db
+        if (msg.startsWith("W3ID")) {
+            email = msg.split(" ")[1];
+
+            const hash = crypto
+              .createHash("sha256")
+              .update(email)
+              .digest("hex");
+
+            const res = await axios.get(
+              `http://registry:3000/canSend/${hash}`
+            );
+
+            if (!res.data.allowed) {
+                socket.write("550 Not authorized\r\n");
+                socket.end();
+            } else {
+                socket.write("250 Authorized\r\n");
+            }
+        }
+
+        if (msg === "QUIT") {
+            socket.write("221 Bye\r\n");
+            socket.end();
+        }
+
+    });
+
+});
+
+server.listen(2525);
